@@ -1,0 +1,12 @@
+@startuml
+
+:http: --> [fabio] : "Dev дашборд :9998"
+:http: --> [fabio] : "Приложение :9999"
+:http: --> [consul_server] : "Dev дашборд :8500"
+[fabio] --> [consul_server] : consul api :8500
+[consul_server] --> [nginx_server] : consul service :80
+
+[consul_client] --> [nginx_client] : consul service :80
+[consul_client] --> [consul_server] : consul api
+
+@enduml

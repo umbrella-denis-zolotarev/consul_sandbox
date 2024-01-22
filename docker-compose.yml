@@ -1,0 +1,46 @@
+version: '3.7'
+
+services:
+
+  consul_server:
+    image: hashicorp/consul:1.15
+    ports:
+      # consul dashboard
+      - 8500:8500
+    volumes:
+      - .docker/consul_server/config:/consul/config
+    depends_on:
+      - nginx_server
+    command: "agent"
+
+  # client has no dashboard
+  consul_client:
+    image: hashicorp/consul:1.15
+    volumes:
+      - .docker/consul_client/config:/consul/config
+    command: "agent"
+    depends_on:
+      - consul_server
+      - nginx_client
+    restart: always
+
+  fabio:
+    image: fabiolb/fabio
+    ports:
+      # fabio dashboard
+      - 9998:9998
+      # the app
+      - 9999:9999
+    depends_on:
+      - consul_server
+    command: -registry.consul.addr="consul_server:8500"
+
+  #containers to balance
+  nginx_client:
+    image: nginx:alpine
+    volumes:
+      - .docker/nginx_client/index.html:/usr/share/nginx/html/index.html
+  nginx_server:
+    image: nginx:alpine
+    volumes:
+      - .docker/nginx_server/index.html:/usr/share/nginx/html/index.html

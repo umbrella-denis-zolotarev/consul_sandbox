@@ -1,0 +1,17 @@
+{
+  "service": {
+    "name": "web_from_server",
+    "tags": [
+      "urlprefix-/"
+    ],
+    "address": "nginx_server",
+    "port": 80,
+    "check": {
+      "id": "web_from_server_status",
+      "name": "Nginx Status",
+      "tcp": "nginx_server:80",
+      "interval": "30s",
+      "timeout": "20s"
+    }
+  }
+}

@@ -1,0 +1,89 @@
+@startuml
+
+package "Server" as server_node {
+    [fabio]
+    [consul_server]
+    package "nomad_0.service.consul" as nomad_0_service {
+        [nomad_0]
+    }
+}
+
+package "Client 1" {
+    [consul_client]
+    package "nomad_1.service.consul" as nomad_1_service {
+        [nomad_1]
+    }
+}
+
+package "Client 2" {
+    [consul_client_2]
+    package "nomad_2.service.consul" as nomad_2_service {
+        [nomad_2]
+    }
+    package "nomad_3.service.consul" as nomad_3_service {
+        [nomad_3]
+    }
+}
+
+:http: --> [fabio] : "Dev дашборд :9998"
+:http: --> [fabio] : "Приложение :9999"
+:http: --> [consul_server] : "Dev дашборд :8500"
+[fabio] --> [consul_server]
+[consul_server] --> [nomad_0_service] : "Может не быть"
+
+[consul_client] --> [consul_server]
+[consul_client] --> [nomad_1_service]
+
+[consul_client_2] --> [consul_server]
+[consul_client_2] --> [nomad_2_service]
+[consul_client_2] --> [nomad_3_service]
+
+note top of server_node
+  <b>Нода консула</b>
+  Нода - физический сервер.
+  На каждой ноде должен минимально стоять cunsul.
+end note
+
+note bottom of fabio
+  <b>Балансировщик сервисами</b>
+  Сюда попадаю сервисы с
+  urlprefix в конфигах консулов
+  серера и клиентов
+  (в корне json консула
+  `"tags": ["urlprefix-/"]`,
+  тут эндпоинт сервиса /,
+  если у сервисов эндпоинты совпадат,
+  происходит балансировка)
+end note
+
+note bottom of consul_server
+  <b>consul agent</b>
+  Может быть запущен как сервер,
+  а может быть запущен как клиент (consul_client выше).
+  Так же тут конфигом прописываются
+  подключаемые сервисы.
+  На сервере:
+  1) Может быть включен дашборд, доступный по http через порт 8500
+  2) vault (бд ключ-значение с админкой) - данные распространяемые по всем сервисам
+end note
+
+note left of nomad_0_service
+  <b>Сервис</b>
+  В конфиге консула описываются сервисы,
+  они представляют собой описание
+  подключения к рабочему сервису (адрес/порт)
+  и healthcheck. В качестве сервиса может
+  быть как запущенное приложение (например,
+  докер запущенный через cli docker)
+  Сервисыам в конфиге выдается имя руками,
+  а потом сервис может обратиться к другому сервису
+  по SERVICE_NAME.service.consul
+end note
+
+note bottom of nomad_0
+  <b>job консула</b>
+  суть - крутить приложение для сервиса (может крутить докер)
+  job может не быть совсем, но тогда пропадет фича перезапуска job
+end note
+
+@enduml

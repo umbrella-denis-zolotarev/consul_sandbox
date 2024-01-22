@@ -1,0 +1,7 @@
+{
+  "node_name": "consul_client",
+  "data_dir": "/consul/data",
+  "retry_join": [
+    "consul_server"
+  ]
+}
